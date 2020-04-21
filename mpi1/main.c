@@ -8,7 +8,7 @@
 #include "print.h"
 #include "init.h"
 
-#include "jacobi2.h"
+#include "jacobi.h"
 #define NMATS 3
 
 #define N_DEFAULT 102

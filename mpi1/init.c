@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #define IND_3D(i, j, k, N) ((i)*(N)*(N) + (j)*(N) + (k))
 
 // u[z][y][x]

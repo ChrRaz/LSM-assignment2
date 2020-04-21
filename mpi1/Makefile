@@ -1,9 +1,7 @@
 # Makefile
 #
-TARGET_J  = poisson_j
-TARGET_GS = poisson_gs
 
-TARGETS = poisson poisson_2
+TARGET = poisson
 
 OBJECTS	= print.o init.o
 
@@ -29,12 +27,9 @@ TEST_OUTPUT     = 4
 TESTFLAGS       = $(TEST_SIZE) $(TEST_ITER) $(TEST_THRESHOLD) $(TEST_START_T) $(TEST_OUTPUT)
 
 .PHONY: all clean realclean bench cleanbench
-all: $(TARGETS)
+all: $(TARGET)
 
-poisson%: main.o $(OBJECTS) jacobi.o
-	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
-
-poisson_%: main%.o $(OBJECTS) jacobi%.o
+poisson: main.o $(OBJECTS) jacobi.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
 main.o:
@@ -48,7 +43,6 @@ realclean: clean
 
 # DO NOT DELETE
 
-main_j.o: main.c print.h jacobi.h
-main_gs.o: main.c print.h gauss_seidel.h
+main.o: main.c print.h jacobi.h
 print.o: print.h
 init.o: init.h
