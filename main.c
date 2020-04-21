@@ -4,19 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#include "alloc3d.h"
 #include "print.h"
 #include "init.h"
 
-#ifdef _JACOBI
 #include "jacobi.h"
 #define NMATS 3
-#endif
-
-#ifdef _GAUSS_SEIDEL
-#include "gauss_seidel.h"
-#define NMATS 2
-#endif
 
 #define N_DEFAULT 102
 
@@ -31,7 +23,7 @@ int main(int argc, char *argv[]) {
   char     *output_prefix = argv[0];
   char     *output_ext    = "";
   char      output_filename[FILENAME_MAX];
-  double ***u             = NULL;
+  double   *u             = NULL;
 
 
   /* get the paramters from the command line */
@@ -44,7 +36,7 @@ int main(int argc, char *argv[]) {
   double outtol = tolerance;
 
   // allocate memory
-  if ( (u = d_malloc_3d(N, N, N)) == NULL ) {
+  if ( (u = malloc(N * N * N * sizeof(double))) == NULL ) {
     perror("array u: allocation failed");
     exit(-1);
   }
@@ -52,41 +44,33 @@ int main(int argc, char *argv[]) {
   prob_init(u, N, start_T);
 
   // allocate heat source
-  double ***source;
-  if ( (source = d_malloc_3d(N, N, N)) == NULL ) {
+  double *source;
+  if ( (source = malloc(N * N * N * sizeof(double))) == NULL ) {
     perror("array source: allocation failed");
     exit(-1);
   }
 
   source_init(source, N);
 
-#ifdef _JACOBI
   // allocate old_u
-  double ***old_u;
-  if ( (old_u = d_malloc_3d(N, N, N)) == NULL ) {
+  double *old_u;
+  if ( (old_u = malloc(N * N * N * sizeof(double))) == NULL ) {
     perror("array old_u: allocation failed");
     exit(-1);
   }
 
   prob_init(old_u, N, start_T);
-#endif
 
   double t_begin = omp_get_wtime();
 
-#ifdef _JACOBI
   int iters = jacobi(u, old_u, source, N, iter_max, &outtol);
 
   if (iters % 2 == 0) {
-    double ***tmp = old_u;
+    double *tmp = old_u;
     old_u = u;
     u = tmp;
   }
   free(old_u);
-#endif
-
-#ifdef _GAUSS_SEIDEL
-  int iters = gauss_seidel(u, source, N, iter_max, &outtol);
-#endif
 
   double t_end = omp_get_wtime();
 

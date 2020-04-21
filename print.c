@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#define IND_3D(i, j, k, N) ((i)*(N)*(N) + (j)*(N) + (k))
+
 static int
 is_little_endian(void) {
     int num = 1;
@@ -9,7 +11,7 @@ is_little_endian(void) {
 }
 
 void
-print_binary(char *fname, int num, double ***u) {
+print_binary(char *fname, int num, double *u) {
 
     FILE *f_ptr;
     size_t written;
@@ -20,7 +22,7 @@ print_binary(char *fname, int num, double ***u) {
        return;
     }
 
-    written = fwrite(u[0][0], sizeof(double), items, f_ptr);
+    written = fwrite(u, sizeof(double), items, f_ptr);
 
     if ( written != items ) {
 	    fprintf(stderr, "Writing failed:  only %lu of %lu items saved!\n",
@@ -31,7 +33,7 @@ print_binary(char *fname, int num, double ***u) {
 }
 
 void
-print_vtk(const char *fname, int n, double ***u) {
+print_vtk(const char *fname, int n, double *u) {
 
     FILE *f_ptr;
     size_t written;
@@ -61,7 +63,7 @@ print_vtk(const char *fname, int n, double ***u) {
         // System is little endian, so we need to reverse the byte order.
         written = 0;
         for (i = 0; i < items; ++i) {
-            uint64_t crnt = *(uint64_t *)(u[0][0] + i); // Get double as int
+            uint64_t crnt = *(uint64_t *)(u + i); // Get double as int
 
             // Reverse byte order and write to file
             crnt = (crnt & 0x00000000FFFFFFFF) << 32 | (crnt & 0xFFFFFFFF00000000) >> 32;
@@ -71,7 +73,7 @@ print_vtk(const char *fname, int n, double ***u) {
         }
     } else {
         // System is big endian, so just dump the data.
-        written = fwrite(u[0][0], sizeof(double), items, f_ptr);
+        written = fwrite(u, sizeof(double), items, f_ptr);
     }
 
     if ( written != items ) {

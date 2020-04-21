@@ -6,6 +6,6 @@
 #ifndef _JACOBI_H
 #define _JACOBI_H
 
-int jacobi(double ***u, double ***old_u, double ***source, int size, int iterations, double *threshold);
+int jacobi(double *u, double *old_u, double *source, int size, int iterations, double *threshold);
 
 #endif

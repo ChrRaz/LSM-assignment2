@@ -6,10 +6,12 @@
 #include <stdio.h>
 #endif
 
+#define IND_3D(i, j, k, N) ((i)*(N)*(N) + (j)*(N) + (k))
+
 
 // size is outer dimension (whole box)
 // source is precomputed delta^2*f
-int jacobi(double ***u, double ***old_u, double ***source, int size, int iterations, double *threshold)
+int jacobi(double *u, double *old_u, double *source, int size, int iterations, double *threshold)
 {
   const double oneoversix = 1./6., term = (*threshold) * (*threshold);
   double d = INFINITY;
@@ -22,8 +24,8 @@ int jacobi(double ***u, double ***old_u, double ***source, int size, int iterati
     for(int i = 1; i < size - 1; i++)   // z direction
       for(int j = 1; j < size - 1; j++)   // y direction
         for(int k = 1; k < size - 1; k++) { // x direction
-          u[i][j][k] = oneoversix * (old_u[i-1][j][k] + old_u[i+1][j][k] + old_u[i][j-1][k] + old_u[i][j+1][k] + old_u[i][j][k-1] + old_u[i][j][k+1] + source[i][j][k]);
-          double diff = u[i][j][k] - old_u[i][j][k];
+          u[IND_3D(i, j, k, size)] = oneoversix * (old_u[IND_3D(i-1, j, k, size)] + old_u[IND_3D(i+1, j, k, size)] + old_u[IND_3D(i, j-1, k, size)] + old_u[IND_3D(i, j+1, k, size)] + old_u[IND_3D(i, j, k-1, size)] + old_u[IND_3D(i, j, k+1, size)] + source[IND_3D(i, j, k, size)]);
+          double diff = u[IND_3D(i, j, k, size)] - old_u[IND_3D(i, j, k, size)];
           d += diff * diff;
         }
 
@@ -33,7 +35,7 @@ int jacobi(double ***u, double ***old_u, double ***source, int size, int iterati
 
     it++;
 
-    double ***tmp = u;
+    double *tmp = u;
     u = old_u;
     old_u = tmp;
   }
