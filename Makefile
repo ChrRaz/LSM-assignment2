@@ -3,13 +3,13 @@
 TARGET_J  = poisson_j
 TARGET_GS = poisson_gs
 
-TARGETS = poisson_1
+TARGETS = poisson poisson_2
 
 OBJECTS	= print.o init.o
 
 # options and settings for the GCC compilers
 #
-CC			 = gcc
+CC			 = mpicc
 DEFS		 =
 OPT			 = -g -O3
 IPO			 =
@@ -31,7 +31,10 @@ TESTFLAGS       = $(TEST_SIZE) $(TEST_ITER) $(TEST_THRESHOLD) $(TEST_START_T) $(
 .PHONY: all clean realclean bench cleanbench
 all: $(TARGETS)
 
-poisson_%: main.o $(OBJECTS) jacobi.o
+poisson%: main.o $(OBJECTS) jacobi.o
+	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+
+poisson_%: main%.o $(OBJECTS) jacobi%.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
 main.o:
