@@ -8,12 +8,12 @@
 #include <stdio.h>
 #endif
 
-#define IND_3D(i, j, k, N) ((i)*(N)*(N) + (j)*(N) + (k))
+#define IND_3D(i, j, k, W) ((i)*(W)*(W) + (j)*(W) + (k))
 
 
 // size is outer dimension (whole box)
 // source is precomputed delta^2*f
-int jacobi(double *u, double *old_u, double *source, int N, int iterations, double *threshold, int rank)
+int jacobi(double *u, double *old_u, double *source, int H, int W, int iterations, double *threshold, int rank)
 {
   const double oneoversix = 1./6., term = (*threshold) * (*threshold);
   double d = INFINITY;
@@ -23,14 +23,14 @@ int jacobi(double *u, double *old_u, double *source, int N, int iterations, doub
 
     d = 0;
 
-    int startz = rank == 0 ? 1   : N/2;
-    int endz   = rank == 0 ? N/2 : N-1;
+    int startz = rank == 0 ? 1   : H/2;
+    int endz   = rank == 0 ? H/2 : H-1;
 
     for(int i = startz; i < endz; i++)   // z direction
-      for(int j = 1; j < N - 1; j++)   // y direction
-        for(int k = 1; k < N - 1; k++) { // x direction
-          u[IND_3D(i, j, k, N)] = oneoversix * (old_u[IND_3D(i-1, j, k, N)] + old_u[IND_3D(i+1, j, k, N)] + old_u[IND_3D(i, j-1, k, N)] + old_u[IND_3D(i, j+1, k, N)] + old_u[IND_3D(i, j, k-1, N)] + old_u[IND_3D(i, j, k+1, N)] + source[IND_3D(i, j, k, N)]);
-          double diff = u[IND_3D(i, j, k, N)] - old_u[IND_3D(i, j, k, N)];
+      for(int j = 1; j < W - 1; j++)   // y direction
+        for(int k = 1; k < W - 1; k++) { // x direction
+          u[IND_3D(i, j, k, W)] = oneoversix * (old_u[IND_3D(i-1, j, k, W)] + old_u[IND_3D(i+1, j, k, W)] + old_u[IND_3D(i, j-1, k, W)] + old_u[IND_3D(i, j+1, k, W)] + old_u[IND_3D(i, j, k-1, W)] + old_u[IND_3D(i, j, k+1, W)] + source[IND_3D(i, j, k, W)]);
+          double diff = u[IND_3D(i, j, k, W)] - old_u[IND_3D(i, j, k, W)];
           d += diff * diff;
         }
 
@@ -39,11 +39,11 @@ int jacobi(double *u, double *old_u, double *source, int N, int iterations, doub
 #endif
 
     if (rank == 0) {
-      MPI_Send(u + N*N*N/2 - N*N, N*N, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-      MPI_Recv(u + N*N*N/2, N*N, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Send(u + H*W*W/2 - W*W, W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+      MPI_Recv(u + H*W*W/2, W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     } else {
-      MPI_Recv(u + N*N*N/2 - N*N, N*N, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(u + N*N*N/2, N*N, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      MPI_Recv(u + H*W*W/2 - W*W, W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Send(u + H*W*W/2, W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 
     it++;

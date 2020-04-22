@@ -11,11 +11,11 @@ is_little_endian(void) {
 }
 
 void
-print_binary(char *fname, int num, double *u) {
+print_binary(char *fname, int H, int W, double *u) {
 
     FILE *f_ptr;
     size_t written;
-    size_t items = num*num*num;
+    size_t items = H*W*W;
 
     if ( (f_ptr = fopen(fname, "w")) == NULL ) {
        perror("No output! fopen()");
@@ -33,11 +33,11 @@ print_binary(char *fname, int num, double *u) {
 }
 
 void
-print_vtk(const char *fname, int n, double *u) {
+print_vtk(const char *fname, int H, int W, double *u) {
 
     FILE *f_ptr;
     size_t written;
-    size_t items = n * n * n;
+    size_t items = H*W*W;
     size_t i;
     int b;
     unsigned char tmp;
@@ -52,7 +52,7 @@ print_vtk(const char *fname, int n, double *u) {
     fprintf(f_ptr, "saved from function print_vtk.\n");
     fprintf(f_ptr, "BINARY\n");
     fprintf(f_ptr, "DATASET STRUCTURED_POINTS\n");
-    fprintf(f_ptr, "DIMENSIONS %d %d %d\n", n, n, n);
+    fprintf(f_ptr, "DIMENSIONS %d %d %d\n", W, W, H);
     fprintf(f_ptr, "ORIGIN %d %d %d\n", 0, 0, 0);
     fprintf(f_ptr, "SPACING %d %d %d\n", 1, 1, 1);
     fprintf(f_ptr, "POINT_DATA %lu\n", items);
