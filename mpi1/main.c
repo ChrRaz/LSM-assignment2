@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <omp.h>
 #include <mpi.h>
 #include "print.h"
@@ -44,49 +45,34 @@ int main(int argc, char *argv[]) {
   double outtol = tolerance;
 
   // allocate memory
-  if ( (u = malloc(H * W * W * sizeof(double))) == NULL ) {
+  if ( (u = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array u: allocation failed");
     exit(-1);
   }
 
-  if (world_rank == 0) {
-    prob_init(u, H, W, start_T);
-    MPI_Send(u + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Recv(u + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
+  prob_init(u, H/2 + 2, W, start_T, world_rank, world_size);
 
   // allocate heat source
   double *source;
-  if ( (source = malloc(H * W * W * sizeof(double))) == NULL ) {
+  if ( (source = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array source: allocation failed");
     exit(-1);
   }
 
-  if (world_rank == 0) {
-    source_init(source, H, W);
-    MPI_Send(source + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Recv(source + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
+  source_init(source, H/2 + 2, W, world_rank, world_size);
 
   // allocate old_u
   double *old_u;
-  if ( (old_u = malloc(H * W * W * sizeof(double))) == NULL ) {
+  if ( (old_u = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array old_u: allocation failed");
     exit(-1);
   }
 
-  if (world_rank == 0) {
-    prob_init(old_u, H, W, start_T);
-    MPI_Send(old_u + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Recv(old_u + H*W*W/2 - W*W, H*W*W/2 + W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
+  prob_init(old_u, H/2 + 2, W, start_T, world_rank, world_size);
 
   double t_begin = omp_get_wtime();
 
-  int iters = jacobi(u, old_u, source, H, W, iter_max, &outtol, world_rank);
+  int iters = jacobi(u, old_u, source, H/2 + 2, W, iter_max, &outtol, world_rank, world_size);
   // int iters = 0;
 
   if (iters % 2 == 0) {
@@ -98,11 +84,14 @@ int main(int argc, char *argv[]) {
 
   double t_end = omp_get_wtime();
 
-  if (world_rank == 0) {
-    MPI_Recv(u + H*W*W/2, H*W*W/2, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  } else {
-    MPI_Send(u + H*W*W/2, H*W*W/2, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+  double *result;
+  if ( (result = malloc(H*W*W * sizeof(double))) == NULL ) {
+    perror("array source: allocation failed");
+    exit(-1);
   }
+
+  MPI_Gather(u + W*W, (H/2)*W*W, MPI_DOUBLE, result, (H/2)*W*W, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
 
   if (world_rank == 0) {
     printf("RESULT: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
@@ -127,7 +116,7 @@ int main(int argc, char *argv[]) {
       output_ext = ".vtk";
       sprintf(output_filename, "%s_%dx%d%s", output_prefix, H-2, W-2, output_ext);
       fprintf(stderr, "Write VTK file to %s\n", output_filename);
-      print_vtk(output_filename, H, W, u);
+      print_vtk(output_filename, H, W, result);
       break;
     default:
       fprintf(stderr, "Non-supported output type!\n");
@@ -135,9 +124,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  output_ext = ".vtk";
+  sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
+  fprintf(stderr, "Write VTK file to %s\n", output_filename);
+  print_vtk(output_filename, H/2+2, W, u);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // de-allocate memory
   free(source);
   free(u);
+  free(result);
 
   MPI_Finalize();
 
