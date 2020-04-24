@@ -45,34 +45,34 @@ int main(int argc, char *argv[]) {
   double outtol = tolerance;
 
   // allocate memory
-  if ( (u = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
+  if ( (u = malloc((H/world_size + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array u: allocation failed");
     exit(-1);
   }
 
-  prob_init(u, H/2 + 2, W, start_T, world_rank, world_size);
+  prob_init(u, H/world_size + 2, W, start_T, world_rank, world_size);
 
   // allocate heat source
   double *source;
-  if ( (source = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
+  if ( (source = malloc((H/world_size + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array source: allocation failed");
     exit(-1);
   }
 
-  source_init(source, H/2 + 2, W, world_rank, world_size);
+  source_init(source, H/world_size + 2, W, world_rank, world_size);
 
   // allocate old_u
   double *old_u;
-  if ( (old_u = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
+  if ( (old_u = malloc((H/world_size + 2) * W*W * sizeof(double))) == NULL ) {
     perror("array old_u: allocation failed");
     exit(-1);
   }
 
-  prob_init(old_u, H/2 + 2, W, start_T, world_rank, world_size);
+  prob_init(old_u, H/world_size + 2, W, start_T, world_rank, world_size);
 
   double t_begin = omp_get_wtime();
 
-  int iters = jacobi(u, old_u, source, H/2 + 2, W, iter_max, &outtol, world_rank, world_size);
+  int iters = jacobi(u, old_u, source, H/world_size + 2, W, iter_max, &outtol, world_rank, world_size);
   // int iters = 0;
 
   if (iters % 2 == 0) {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  MPI_Gather(u + W*W, (H/2)*W*W, MPI_DOUBLE, result, (H/2)*W*W, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gather(u + W*W, (H/world_size)*W*W, MPI_DOUBLE, result, (H/world_size)*W*W, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 
   if (world_rank == 0) {
@@ -124,10 +124,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  //output_ext = ".vtk";
-  //sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
-  //fprintf(stderr, "Write VTK file to %s\n", output_filename);
-  //print_vtk(output_filename, H/2+2, W, u);
+  output_ext = ".vtk";
+  sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
+  fprintf(stderr, "Write VTK file to %s\n", output_filename);
+  print_vtk(output_filename, H/world_size+2, W, u);
 
   MPI_Barrier(MPI_COMM_WORLD);
 

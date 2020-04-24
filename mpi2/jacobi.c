@@ -17,11 +17,6 @@
 int jacobi(double *u, double *old_u, double *source, int H, int W, int iterations, double *threshold, int rank, int size)
 {
   
-  if (size != 2) {
-    fprintf(stderr, "This version can only run on 2 ranks\n");
-    return 1;
-  }
-  
   const double oneoversix = 1./6., term = (*threshold) * (*threshold);
   double d = INFINITY;
 
@@ -33,9 +28,15 @@ int jacobi(double *u, double *old_u, double *source, int H, int W, int iteration
     if (rank == 0) {
       MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
       MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else {
-      MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    } else if (rank > 0 && rank < size - 1) {
+      MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
+      MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
+      MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    } else if (rank == size - 1) {
+      MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, size - 2, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, size - 2, 0, MPI_COMM_WORLD);
     }
 
     for(int i = 1; i < H - 1; i++)   // z direction
