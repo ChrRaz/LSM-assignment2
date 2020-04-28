@@ -84,15 +84,6 @@ int main(int argc, char *argv[]) {
 
   double t_end = omp_get_wtime();
 
-  double *result;
-  if ( (result = malloc(H*W*W * sizeof(double))) == NULL ) {
-    perror("array source: allocation failed");
-    exit(-1);
-  }
-
-  MPI_Gather(u + W*W, (H/world_size)*W*W, MPI_DOUBLE, result, (H/world_size)*W*W, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-
   if (world_rank == 0) {
     printf("RESULT: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
     printf(" : %10.3lf sec, %8lu KB, %d iterations, |x| = %lf\n", t_end - t_begin, H*W*W * sizeof(double), iters, outtol);
@@ -116,7 +107,15 @@ int main(int argc, char *argv[]) {
       output_ext = ".vtk";
       sprintf(output_filename, "%s_%dx%d%s", output_prefix, H-2, W-2, output_ext);
       fprintf(stderr, "Write VTK file to %s\n", output_filename);
-      print_vtk(output_filename, H, W, result);
+
+      FILE *vtk = open_vtk(output_filename, (H/world_size)*world_size, W);
+      write_vtk(vtk, H/world_size, W, u+W*W);
+      for (int i = 1; i < world_size; i++) {
+        MPI_Recv(u+W*W, H/world_size*W*W, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        write_vtk(vtk, H/world_size, W, u+W*W);
+      }
+      fclose(vtk);
+
       break;
     default:
       fprintf(stderr, "Non-supported output type!\n");
@@ -124,17 +123,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (world_rank != 0)
+    MPI_Send(u+W*W, H/world_size*W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+
   output_ext = ".vtk";
   sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
   fprintf(stderr, "Write VTK file to %s\n", output_filename);
-  print_vtk(output_filename, H/world_size+2, W, u);
+  FILE *vtk = open_vtk(output_filename, H/world_size+2, W);
+  write_vtk(vtk, H/world_size+2, W, u);
+  fclose(vtk);
 
   MPI_Barrier(MPI_COMM_WORLD);
 
   // de-allocate memory
   free(source);
   free(u);
-  free(result);
 
   MPI_Finalize();
 
