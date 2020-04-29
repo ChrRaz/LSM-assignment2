@@ -88,7 +88,7 @@ void write_vtk(FILE *file, int H, int W, double *u)
     if ( written != items ) {
 	    fprintf(stderr, "Writing failed:  only %lu of %lu items saved!\n",
 		written, items);
+    } else {
+        fprintf(stderr, "[%d] Wrote %d items\n", rank, written);
     }
-
-    printf("[%d] Wrote %d items\n", rank, written);
 }
