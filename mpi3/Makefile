@@ -21,7 +21,7 @@ LDFLAGS	 = -lm
 
 TEST_SIZE       = 100
 TEST_ITER       = 15000
-TEST_THRESHOLD  = 0.01
+TEST_THRESHOLD  = 0
 TEST_START_T    = 0
 TEST_OUTPUT     = 4
 TESTFLAGS       = $(TEST_SIZE) $(TEST_ITER) $(TEST_THRESHOLD) $(TEST_START_T) $(TEST_OUTPUT)
@@ -39,7 +39,7 @@ clean:
 	@/bin/rm -vf core *.o *~
 
 realclean: clean
-	@/bin/rm -vf $(TARGET_J)  $(TARGET_GS)
+	@/bin/rm -vf $(TARGET)
 
 # DO NOT DELETE
 
