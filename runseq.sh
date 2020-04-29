@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -J poissonseq
-#BSUB -o logs/%J_sequential.out
-#BSUB -e logs/%J_sequential.err
+#BSUB -o logs/%J_sequential.out.txt
+#BSUB -e logs/%J_sequential.err.txt
 #BSUB -q hpcintro
 #BSUB -n 1
 #BSUB -R "rusage[mem=8G]"

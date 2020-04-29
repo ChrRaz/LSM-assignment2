@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -J poisson[1-3]%2
-#BSUB -o logs/%J_mpi%I.out
-#BSUB -e logs/%J_mpi%I.err
+#BSUB -o logs/%J_mpi%I.out.txt
+#BSUB -e logs/%J_mpi%I.err.txt
 #BSUB -q hpcintro
 #BSUB -n 24
 #BSUB -R "rusage[mem=8G]"
