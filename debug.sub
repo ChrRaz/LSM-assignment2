@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# debug.sub - a LSF script to start a debugging session with TotalView
+#
+# submit as:  MPIVER=/comp_env PROG=./your_prog bsub [bsuboptions] debug.sh
+#
+# where comp_env is your MPI compiler environment, e.g. gcc, studio, or intel
+#
+# written by: Bernd Dammann <support@hpc.dtu.dk> , 04/2019
+#
+# name of the job
+#BSUB -J TVdebug
+# we need to forward the DISPLAY, and the name of our program to debug
+#BSUB -env DISPLAY,PROG,MPIVER
+# the log files 
+#BSUB -o TVdebug_%J.out
+#BSUB -e TVdebug_%J.err
+#
+# we should be done within one hour
+#BSUB -W 1:00
+#
+# the number of cores and the distribution
+#BSUB -n 8
+#BSUB -R "span[ptile=4]"
+#
+# the memory per core
+#BSUB -R "rusage[mem=2GB]"
+
+# load the right MPI support module
+#
+module load mpi/${MPIVER}
+
+# start TotalView, with $PROG, using OpenMPI, on LSB_DJOB_NUMPROC processors
+#
+totalview $PROG -mpi "Open MPI" \
+          -np $LSB_DJOB_NUMPROC \
+          -no_show_startup_parameters 
+

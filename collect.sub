@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# collect.sub - a LSF script to start a collect session (Studio analyzer)
+#               for MPI programs (multi-node)
+#
+# submit as:
+#    PROG=./your_prog PROGARGS="prog_args" bsub [bsuboptions] < collect.sub
+#
+# written by: Bernd Dammann <support@hpc.dtu.dk> , 04/2019
+#
+# name of the job
+#BSUB -J collect
+#
+# stdout/stderr
+#BSUB -o collect_%J.out
+#BSUB -e collect_%J.err
+#
+# we should be done within one hour
+#BSUB -W 1:00
+#
+# the number of cores we need, and their distribution
+#BSUB -n 8
+#BSUB -R "span[ptile=4]"
+#
+# memory (per core)
+#BSUB -R "rusage[mem=1GB]"
+#
+# we need to fetch PROG and PROGARGS from the environment
+#BSUB -env "PROG,PROGARGS"
+
+# load the Studio tools
+module load studio
+
+# load the right compiler and MPI support module
+#
+module load mpi/3.1.5-gcc-9.2.0
+
+PNAME=`echo $PROG | sed 's/ .*$//'`
+STR=`basename $PNAME`
+JID=$LSB_JOBID
+# start collect with $PROG, using OpenMPI
+#
+collect -M OPENMPI -o collect_${STR}_${JID}.er mpirun -- $PROG $PROGARGS

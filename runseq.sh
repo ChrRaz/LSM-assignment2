@@ -6,7 +6,7 @@
 #BSUB -n 1
 #BSUB -R "rusage[mem=8G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 3:00
+#BSUB -W 6:00
 ###BSUB -R "select[model == XeonE5_2650v4]"
 
 module load studio

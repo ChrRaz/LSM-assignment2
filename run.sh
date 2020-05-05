@@ -1,5 +1,5 @@
 #!/bin/bash
-#BSUB -J poisson[1-3]%2
+#BSUB -J poisson[2-3]
 #BSUB -o logs/%J_mpi%I.out.txt
 #BSUB -e logs/%J_mpi%I.err.txt
 #BSUB -q hpcintro
