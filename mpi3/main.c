@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
   if (output_type == 4) {
     // Send to root for collective output
     if(world_rank != 0)
-      MPI_Send(u+W*W, H/world_size*W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      MPI_Send(u+W*W, H/world_size*W*W, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
 
     // Print own subgrid
     output_ext = ".vtk";
