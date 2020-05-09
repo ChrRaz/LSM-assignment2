@@ -10,7 +10,7 @@
 ###BSUB -R "select[model == XeonE5_2650v4]"
 
 module load studio
-module load mpi/3.1.5-gcc-9.2.0
+module load "mpi/${MPIVER:-3.1.5-gcc-9.2.0}"
 
 # BASH_LIB=$(pwd)
 # ROOT_LIB=$BASH_LIB/..
@@ -23,10 +23,10 @@ N=(3 4 8 16 24)
 # W=(200)
 # N=(8)
 
-iter_max=10000
+iter_max=2000
 tolerance=0
 start_T=15
-output_type=4
+output_type=0
 
 INSTANCE="mpi${LSB_JOBINDEX}"
 
@@ -45,7 +45,7 @@ do
         do
             #printf "H: %d, W: %d, N: %d\n" "${H[$h]}" "${W[$w]}" "${N[$n]}"
             echo "mpirun -n ${N[$n]} ./poisson ${H[$h]} ${W[$w]} $iter_max $tolerance $start_T $output_type"
-            mpirun -n "${N[$n]}" ./poisson "${H[$h]}" "${W[$w]}" $iter_max $tolerance $start_T $output_type
+            mpirun --report-bindings -n "${N[$n]}" ./poisson "${H[$h]}" "${W[$w]}" $iter_max $tolerance $start_T $output_type
         done
     done
 done
