@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
   int       H             = N_DEFAULT;
   int       W             = N_DEFAULT;
   int       iter_max      = 1000;
+  // Unused
   double    tolerance     = 0.1;
   double    start_T       = 0;
   int       output_type   = 0;
@@ -41,8 +42,6 @@ int main(int argc, char *argv[]) {
   int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
-  double outtol = tolerance;
 
   // allocate memory
   if ( (u = malloc((H/world_size + 2) * W*W * sizeof(double))) == NULL ) {
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
 
   double t_begin = omp_get_wtime();
 
-  int iters = jacobi(u, old_u, source, H/world_size + 2, W, iter_max, &outtol, world_rank, world_size);
+  int iters = jacobi(u, old_u, source, H/world_size + 2, W, iter_max, world_rank, world_size);
   // int iters = 0;
 
   if (iters % 2 == 0) {
@@ -80,13 +79,12 @@ int main(int argc, char *argv[]) {
     old_u = u;
     u = tmp;
   }
-  free(old_u);
 
   double t_end = omp_get_wtime();
 
   if (world_rank == 0) {
     printf("RESULT: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
-    printf(" : %10.3lf sec, %8lu KB, %d iterations, |x| = %lf\n", t_end - t_begin, H*W*W * sizeof(double), iters, outtol);
+    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double), iters);
 
     // printf("%s: %d iterations, |x| = %lf\n", argv[0], iters, tolerance);
 
@@ -123,19 +121,25 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (world_rank != 0)
-    MPI_Send(u+W*W, H/world_size*W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+  if (output_type == 4) {
+    // Send to root for collective output
+    if(world_rank != 0)
+      MPI_Send(u+W*W, H/world_size*W*W, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 
-  output_ext = ".vtk";
-  sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
-  fprintf(stderr, "Write VTK file to %s\n", output_filename);
-  FILE *vtk = open_vtk(output_filename, H/world_size+2, W);
-  write_vtk(vtk, H/world_size+2, W, u);
-  fclose(vtk);
+    // Print own subgrid
+    output_ext = ".vtk";
+    sprintf(output_filename, "%s_%dx%d_%d%s", output_prefix, H-2, W-2, world_rank, output_ext);
+    fprintf(stderr, "Write VTK file to %s\n", output_filename);
+    FILE *vtk = open_vtk(output_filename, H/world_size+2, W);
+    write_vtk(vtk, H/world_size+2, W, u);
+    fclose(vtk);
+  }
+
 
   MPI_Barrier(MPI_COMM_WORLD);
 
   // de-allocate memory
+  free(old_u);
   free(source);
   free(u);
 
