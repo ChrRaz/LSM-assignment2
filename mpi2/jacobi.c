@@ -19,17 +19,11 @@ int jacobi(double *u, double *old_u, double *source, int H, int W, int iteration
   int it = 0;
   while(it < iterations) {
 
-    if (rank == 0) {
-      MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-      MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else if (rank > 0 && rank < size - 1) {
-      MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
-      MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-      MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else if (rank == size - 1) {
-      MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
+    if (rank > 0) {
+      MPI_Sendrecv(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, &old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    if (rank < size - 1) {
+      MPI_Sendrecv(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, &old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     for(int i = 1; i < H - 1; i++)   // z direction

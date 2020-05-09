@@ -20,31 +20,8 @@ int jacobi(double *u, double *old_u, double *source, int H, int W, int iteration
 
   const double oneoversix = 1./6.;
 
-  if (rank == 0) {
-    MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-    MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    memcpy(&u[IND_3D(H-1, 0, 0, W)], &old_u[IND_3D(H-1, 0, 0, W)], W*W*sizeof(double));
-  } else if (rank > 0 && rank < size - 1) {
-    MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
-    MPI_Send(&old_u[IND_3D(H-2, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-    MPI_Recv(&old_u[IND_3D(H-1, 0, 0, W)], W*W, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    memcpy(&u[IND_3D(H-1, 0, 0, W)], &old_u[IND_3D(H-1, 0, 0, W)], W*W*sizeof(double));
-    memcpy(&u[IND_3D(  0, 0, 0, W)], &old_u[IND_3D(  0, 0, 0, W)], W*W*sizeof(double));
-  } else if (rank == size - 1) {
-    MPI_Recv(&old_u[IND_3D(  0, 0, 0, W)], W*W, MPI_DOUBLE, size - 2, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Send(&old_u[IND_3D(  1, 0, 0, W)], W*W, MPI_DOUBLE, size - 2, 0, MPI_COMM_WORLD);
-    memcpy(&u[IND_3D(0, 0, 0, W)], &old_u[IND_3D(0, 0, 0, W)], W*W*sizeof(double));
-  }
-
   int it = 0;
   while(it < iterations) {
-
-    for(int j = 1; j < W - 1; j++)   // y direction
-      for(int k = 1; k < W - 1; k++) { // x direction
-        u[IND_3D(1, j, k, W)] = oneoversix * (old_u[IND_3D(1-1, j, k, W)] + old_u[IND_3D(1+1, j, k, W)] + old_u[IND_3D(1, j-1, k, W)] + old_u[IND_3D(1, j+1, k, W)] + old_u[IND_3D(1, j, k-1, W)] + old_u[IND_3D(1, j, k+1, W)] + source[IND_3D(1, j, k, W)]);
-        u[IND_3D(H - 2, j, k, W)] = oneoversix * (old_u[IND_3D(H - 3, j, k, W)] + old_u[IND_3D(H - 1, j, k, W)] + old_u[IND_3D(H - 2, j-1, k, W)] + old_u[IND_3D(H - 2, j+1, k, W)] + old_u[IND_3D(H - 2, j, k-1, W)] + old_u[IND_3D(H - 2, j, k+1, W)] + source[IND_3D(H - 2, j, k, W)]);
-      }
 
     int num_req = (rank > 0 && rank < (size - 1)) ? 4 : 2;
     MPI_Request reqs[4];
@@ -72,6 +49,12 @@ int jacobi(double *u, double *old_u, double *source, int H, int W, int iteration
     // MPI_Barrier(MPI_COMM_WORLD);
 
     it++;
+
+    for(int j = 1; j < W - 1; j++)   // y direction
+      for(int k = 1; k < W - 1; k++) { // x direction
+        u[IND_3D(1, j, k, W)] = oneoversix * (old_u[IND_3D(1-1, j, k, W)] + old_u[IND_3D(1+1, j, k, W)] + old_u[IND_3D(1, j-1, k, W)] + old_u[IND_3D(1, j+1, k, W)] + old_u[IND_3D(1, j, k-1, W)] + old_u[IND_3D(1, j, k+1, W)] + source[IND_3D(1, j, k, W)]);
+        u[IND_3D(H - 2, j, k, W)] = oneoversix * (old_u[IND_3D(H - 3, j, k, W)] + old_u[IND_3D(H - 1, j, k, W)] + old_u[IND_3D(H - 2, j-1, k, W)] + old_u[IND_3D(H - 2, j+1, k, W)] + old_u[IND_3D(H - 2, j, k-1, W)] + old_u[IND_3D(H - 2, j, k+1, W)] + source[IND_3D(H - 2, j, k, W)]);
+      }
 
     double *tmp = u;
     u = old_u;
