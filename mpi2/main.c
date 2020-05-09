@@ -83,8 +83,8 @@ int main(int argc, char *argv[]) {
   double t_end = omp_get_wtime();
 
   if (world_rank == 0) {
-    printf("RESULT: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
-    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double), iters);
+    printf("mpi2: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
+    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double) / 1024, iters);
 
     // printf("%s: %d iterations, |x| = %lf\n", argv[0], iters, tolerance);
 
