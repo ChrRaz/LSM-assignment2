@@ -43,8 +43,8 @@ void source_init(double *source, int H, int W, int rank, int size)
     ux = W * 5 / 16,
     ly = 0,
     uy = W / 4,
-    lz = H / 6,
-    uz = H / 2;
+    lz = H*size / 6,
+    uz = H*size / 2;
 
   for(int i = 0; i < H; i++)
     for(int j = 0; j < W; j++)
