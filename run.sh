@@ -19,9 +19,9 @@ module load mpi/3.1.5-gcc-9.2.0
 H=(100 200 500 1000)
 W=(100 200 500)
 N=(3 4 8 16 24)
-# H=(500)
-# W=(200)
-# N=(8)
+#H=(100)
+#W=(200)
+#N=(8)
 
 iter_max=10000
 tolerance=0
@@ -45,7 +45,7 @@ do
         do
             #printf "H: %d, W: %d, N: %d\n" "${H[$h]}" "${W[$w]}" "${N[$n]}"
             echo "mpirun -n ${N[$n]} ./poisson ${H[$h]} ${W[$w]} $iter_max $tolerance $start_T $output_type"
-            mpirun -n "${N[$n]}" ./poisson "${H[$h]}" "${W[$w]}" $iter_max $tolerance $start_T $output_type
+            mpirun --report-bindings -n "${N[$n]}" ./poisson "${H[$h]}" "${W[$w]}" $iter_max $tolerance $start_T $output_type
         done
     done
 done
