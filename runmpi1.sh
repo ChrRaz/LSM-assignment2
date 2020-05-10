@@ -1,13 +1,13 @@
 #!/bin/bash
-#BSUB -J poisson[2-3]
+#BSUB -J poisson[1]
 #BSUB -o logs/%J_mpi%I.out.txt
 #BSUB -e logs/%J_mpi%I.err.txt
-#BSUB -q hpcintro
+#BSUB -q hpc
 #BSUB -n 24
 #BSUB -R "rusage[mem=8G]"
 #BSUB -R "span[hosts=1]"
 #BSUB -W 3:00
-###BSUB -R "select[model == XeonE5_2650v4]"
+#BSUB -R "select[model == XeonE5_2650v4]"
 
 module load studio
 module load "mpi/${MPIVER:-3.1.5-gcc-9.2.0}"
@@ -18,10 +18,9 @@ module load "mpi/${MPIVER:-3.1.5-gcc-9.2.0}"
 
 H=(100 200 500 1000)
 W=(100 200 500)
-N=(3 4 8 16 24)
-#H=(100)
-#W=(200)
-#N=(8)
+# H=(200)
+# W=(200)
+N=(2)
 
 iter_max=2000
 tolerance=0

@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
   int       H             = N_DEFAULT;
   int       W             = N_DEFAULT;
   int       iter_max      = 1000;
+  // Unused
   double    tolerance     = 0.1;
   double    start_T       = 0;
   int       output_type   = 0;
@@ -42,7 +43,10 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  double outtol = tolerance;
+  if (world_size != 2) {
+    fprintf(stderr, "This version can only run on 2 ranks\n");
+    return 1;
+  }
 
   // allocate memory
   if ( (u = malloc((H/2 + 2) * W*W * sizeof(double))) == NULL ) {
@@ -72,7 +76,7 @@ int main(int argc, char *argv[]) {
 
   double t_begin = omp_get_wtime();
 
-  int iters = jacobi(u, old_u, source, H/2 + 2, W, iter_max, &outtol, world_rank, world_size);
+  int iters = jacobi(u, old_u, source, H/2 + 2, W, iter_max, world_rank, world_size);
   // int iters = 0;
 
   if (iters % 2 == 0) {
@@ -94,8 +98,8 @@ int main(int argc, char *argv[]) {
 
 
   if (world_rank == 0) {
-    printf("RESULT: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
-    printf(" : %10.3lf sec, %8lu KB, %d iterations, |x| = %lf\n", t_end - t_begin, H*W*W * sizeof(double), iters, outtol);
+    printf("mpi1: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
+    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double), iters);
 
     // printf("%s: %d iterations, |x| = %lf\n", argv[0], iters, tolerance);
 

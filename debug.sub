@@ -12,7 +12,7 @@
 #BSUB -J TVdebug
 # we need to forward the DISPLAY, and the name of our program to debug
 #BSUB -env DISPLAY,PROG,MPIVER
-# the log files 
+# the log files
 #BSUB -o TVdebug_%J.out
 #BSUB -e TVdebug_%J.err
 #
@@ -20,19 +20,20 @@
 #BSUB -W 1:00
 #
 # the number of cores and the distribution
-#BSUB -n 8
-#BSUB -R "span[ptile=4]"
+#BSUB -n 4
+#BSUB -R "span[ptile=2]"
 #
 # the memory per core
 #BSUB -R "rusage[mem=2GB]"
 
 # load the right MPI support module
 #
-module load mpi/${MPIVER}
+module load "mpi/${MPIVER:-3.1.5-gcc-9.2.0}"
+
+make -B
 
 # start TotalView, with $PROG, using OpenMPI, on LSB_DJOB_NUMPROC processors
 #
 totalview $PROG -mpi "Open MPI" \
           -np $LSB_DJOB_NUMPROC \
-          -no_show_startup_parameters 
-
+          -no_show_startup_parameters

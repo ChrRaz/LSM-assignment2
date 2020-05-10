@@ -6,7 +6,7 @@
 #BSUB -n 1
 #BSUB -R "rusage[mem=8G]"
 #BSUB -R "span[hosts=1]"
-#BSUB -W 6:00
+#BSUB -W 3:00
 ###BSUB -R "select[model == XeonE5_2650v4]"
 
 module load studio
@@ -18,14 +18,13 @@ module load studio
 
 H=(100 200 500 1000)
 W=(100 200 500)
-# H=(500)
+# H=(200)
 # W=(200)
-# N=(8)
 
-iter_max=10000
+iter_max=2000
 tolerance=0
 start_T=15
-output_type=4
+output_type=0
 
 INSTANCE="sequential"
 

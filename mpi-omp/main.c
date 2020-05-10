@@ -1,6 +1,8 @@
 /* main.c - Poisson problem in 3D
  *
  */
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +10,9 @@
 #include <mpi.h>
 #include "print.h"
 #include "init.h"
+
+#include <sched.h>
+#include <numa.h>
 
 #include "jacobi.h"
 #define NMATS 3
@@ -19,7 +24,6 @@ int main(int argc, char *argv[]) {
   int       H             = N_DEFAULT;
   int       W             = N_DEFAULT;
   int       iter_max      = 1000;
-  // Unused
   double    tolerance     = 0.1;
   double    start_T       = 0;
   int       output_type   = 0;
@@ -42,6 +46,13 @@ int main(int argc, char *argv[]) {
   int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+  #pragma omp parallel
+  {
+    int core_id  = sched_getcpu();
+    int numanode = numa_node_of_cpu(core_id);
+    fprintf(stderr, "[%d] Core ID: %d\t NUMA node: %d\n", world_rank, core_id, numanode);
+  }
 
   // allocate memory
   if ( (u = malloc((H/world_size + 2) * W*W * sizeof(double))) == NULL ) {
@@ -83,8 +94,8 @@ int main(int argc, char *argv[]) {
   double t_end = omp_get_wtime();
 
   if (world_rank == 0) {
-    printf("mpi2: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
-    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double) / 1024, iters);
+    printf("mpi-omp: %s (%3dx%3d) %d %lf %.1lf %d", argv[0], H - 2, W - 2, iter_max, tolerance, start_T, output_type);
+    printf(" : %10.3lf sec, %8lu KB, %d iterations\n", t_end - t_begin, H*W*W * sizeof(double), iters);
 
     // printf("%s: %d iterations, |x| = %lf\n", argv[0], iters, tolerance);
 
@@ -135,12 +146,9 @@ int main(int argc, char *argv[]) {
     fclose(vtk);
   }
 
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
   // de-allocate memory
-  free(old_u);
   free(source);
+  free(old_u);
   free(u);
 
   MPI_Finalize();
