@@ -24,7 +24,7 @@
 #BSUB -R "span[ptile=2]"
 #
 # the memory per core
-#BSUB -R "rusage[mem=2GB]"
+#BSUB -R "rusage[mem=4GB]"
 
 # load the right MPI support module
 #
